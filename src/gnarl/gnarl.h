@@ -30,3 +30,14 @@ void send_bytes(const uint8_t *buf, int count);
 void print_bytes(const char* msg, const uint8_t *buf, int count);
 
 #endif // _GNARL_H
+
+/*
+    De main.c únicamente se ejecuta el comando gnarl_init que en principio debería de comenzar a correr la programación como tal
+
+    Pero ¿Qué hacen las demás funciones?
+        *   start_gnarl_task(void);
+        *   rfspy_command(const uint8_t *buf, int count, int rssi)
+        *   send_code(const uint8_t code);
+        *   send_bytes(const uint8_t *buf, int count);
+        *   print_bytes(const char* msg, const uint8_t *buf, int count);
+*/

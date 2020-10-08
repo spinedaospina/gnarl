@@ -34,7 +34,7 @@ typedef struct {
 	uint8_t data[MAX_PARAM_LEN + MAX_PACKET_LEN];
 } rfspy_request_t;
 
-#define QUEUE_LENGTH		20
+#define QUEUE_LENGTH		100
 
 static QueueHandle_t request_queue;
 
