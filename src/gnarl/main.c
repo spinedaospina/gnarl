@@ -9,59 +9,60 @@
 #define PUMP_FREQUENCY 916400000
 
 void app_main(void) {
-	ESP_LOGD(TAG, "enable watchdog with a timeout of %d seconds", WDT_TIMEOUT_SECONDS); //Se muestra en monitor el tiempo con el que trabajará
-																						//el perro guardian TWDT, en este caso, corresponde a un
-																						//tiempo de 300 segundos equivalentes a cinco minutos
-																						//Todos estos comandos ESP_LOG* se encuentran en:
+	ESP_LOGD(TAG, "enable watchdog with a timeout of %d seconds", WDT_TIMEOUT_SECONDS); //A monitor message appear with the Watch Dog Timer,
+																						//in this case, this time is about 300 seconds = 5 min
+																						//All the ESP_LOG* commands could be find in:
 																						//esp/esp-idf/components/spi_flash/sim/stubs/log/include/esp_log.h
 
-	esp_task_wdt_init(WDT_TIMEOUT_SECONDS, true);										//Comando para inicializar el TWDT con los valores
-																						//mostrados anteriormente se encuentra en 
+	esp_task_wdt_init(WDT_TIMEOUT_SECONDS, true);										//Initialization WDT command with the time of 5 mins
+																						//The command could be found in:
 																						//~/esp/esp-idf/components/esp_common/include/esp_task_wdt.h
 
-	ESP_LOGI(TAG, "%s", SUBG_RFSPY_VERSION);											//Escribe "subg_rfspy 2.2" en el monitor con un color
-																						//verde, ya que es del tipo info
+	ESP_LOGI(TAG, "%s", SUBG_RFSPY_VERSION);											//It shows in monitor "subg_rfspy 2.2" with a green color
+																						//the color depend of the ESP_LOG message
+																						//for example "I" message are green and
+																						//E messages are red
 
-	rfm95_init();																		//Se inicia la radiofrecuencia, no arroja nada en pantalla
+	rfm95_init();																		//The RF is started, nothing is shown in monitor
 																						
-	uint8_t v = read_version();															//Se lee la versión del radio y se almacena en la variable
-																						//v, uint8_t es un entero sin signo que se almacena
-																						//en 8 bits
+	uint8_t v = read_version();															//The radio version is read and it's saved in the "v" variable
+																						//the meaning of uint8_t is "unsigned 8 bits int"
 
-	ESP_LOGD(TAG, "radio version %d.%d", version_major(v), version_minor(v));			//Se imprime en monitor un Debug con el mensaje:
-																						//"radio version 1.2", debe de existir en las librerias
-																						//<esp_wifi.h> o <esp_task_wdt.h> el comando 
-																						//version_mayor y version_minor que transforme el 
-																						//valor de v en los datos mostrados en el monitor
-																						//Pero este en principio no es importante
+	ESP_LOGD(TAG, "radio version %d.%d", version_major(v), version_minor(v));			//The monitor shows: "radio version 1.2".
+																						//In the libraries
+																						//<esp_wifi.h> o <esp_task_wdt.h> should exists a  
+																						//command version_mayor and version_minor which 
+																						//convert the v value in the monitor message values
+																						//I guess that this command it's not huge important
 
-	set_frequency(PUMP_FREQUENCY);														//Se establece la frecuencia de la bomba, se varió este
-																						//valor de 916600000 a 916400000 y funcionó todo
+	set_frequency(PUMP_FREQUENCY);														//The pump frequency was setted, this value was changed from
+																						//916600000 to 916400000 y "magically" all works
+																						//This change was done in line number 9
 
-	ESP_LOGD(TAG, "frequency set to %d Hz", read_frequency());							//Se imprime en monitor la frecuencia que se eligió
+	ESP_LOGD(TAG, "frequency set to %d Hz", read_frequency());							//The setted frequency is shown
 
-	display_init();																		//Se inicia el display
+	display_init();																		//The display get started
 
-	gnarl_init();																		//Se inicia el gnarl
+	gnarl_init();																		//The gnarl get started
 }
 
 /*
-Este main.c corresponde al que se encuentra en la localizacion:
-$dondeSeaQueTengasGnarl/gnarl/src/gnarl/main.c
+This main.c is located in:
+$IDK_somewhere/gnarl/src/gnarl/main.c
 
-Todos los comandos ESP_LOG* son encargados de mostrar los mensajes en el monitor
-depende de la denominación que se dé en *, que puede ser del tipo:
+All the commands ESP_LOG* shows monitor message
+The * character could be changed for:
 	-ESP_LOGE = Error (lowest)
 	-ESP_LOGW = Warning
 	-ESP_LOGI = Info
 	-ESP_LOGD = Debug
 	-ESP_LOGV = Verbose (highest)
 
-Aún no termino de entender la función del parámetro "TAG", pero de resto
-funciona como un printf
+I still without understanding the "TAG" parametr in the function.
+For simplification the command ESP_LOG* works like a printf in the monitor
 */
 
 /*
-Se debe de revisar entonces display.h y gnarl.h en búsqueda de datos 
-para entender como funciona más a profundidad el programa
+The codes display.h and gnarl.h have to be looked to	 search of info
+about the all gnarl performance 
 */
