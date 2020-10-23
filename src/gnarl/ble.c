@@ -463,7 +463,7 @@ static void host_task(void *arg) {
 }
 
 void gnarl_init(void) {
-	start_gnarl_task();
+	start_gnarl_task();												//Start the gnarl_loop creating a high priority task
 
 	ESP_ERROR_CHECK(nvs_flash_init());
 	ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());

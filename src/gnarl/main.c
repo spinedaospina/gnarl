@@ -44,7 +44,7 @@ void app_main(void) {
 
 
 	"(672) GNARL: display_loop: op 4 arg 0"
-	display_init();																		//The display started, command in display.h
+	display_init();																		//The display is started, command in display.h
 
 	"(672) GNARL: starting gnarl_loop"
 	gnarl_init();																		//The gnarl started, command in ble.c

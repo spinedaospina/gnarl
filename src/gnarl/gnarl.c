@@ -352,6 +352,10 @@ void rfspy_command(const uint8_t *buf, int count, int rssi) {
 	ESP_LOGD(TAG, "rfspy_command %d, queue length %d", cmd, uxQueueMessagesWaiting(request_queue));
 }
 
+/*
+gnarl_loop(void *unused)
+	
+*/
 static void gnarl_loop(void *unused) {
 	ESP_LOGD(TAG, "starting gnarl_loop");
 	esp_task_wdt_add(0);
@@ -417,8 +421,13 @@ static void gnarl_loop(void *unused) {
 	}
 }
 
+/*
+start_gnarl_task()
+
+	Start the gnarl_loop creating a high priority task
+*/
 void start_gnarl_task(void) {
-	request_queue = xQueueCreate(QUEUE_LENGTH, sizeof(rfspy_request_t));
+	request_queue = xQueueCreate(QUEUE_LENGTH, sizeof(rfspy_request_t));					//A queue named "request_queu" is created with 100 elements
 	// Start radio task with high priority to avoid receiving truncated packets.
-	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, tskIDLE_PRIORITY + 24, &gnarl_loop_handle);
+	xTaskCreate(gnarl_loop, "gnarl", 4096, 0, tskIDLE_PRIORITY + 24, &gnarl_loop_handle);	//Create the "gnarl" task based on the gnarl_loop command
 }

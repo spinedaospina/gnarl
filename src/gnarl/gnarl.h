@@ -24,6 +24,10 @@
 
 void gnarl_init(void);
 void start_gnarl_task(void);
+/*
+start_gnarl_task()
+	Start the gnarl_loop creating a high priority task
+*/
 void rfspy_command(const uint8_t *buf, int count, int rssi);
 void send_code(const uint8_t code);
 void send_bytes(const uint8_t *buf, int count);
