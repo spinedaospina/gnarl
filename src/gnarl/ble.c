@@ -113,6 +113,9 @@ static const struct ble_gatt_svc_def service_list[] = {
 	{}, // End of service list.
 };
 
+/*
+	Init the server and display the UUID of the pŕocess
+*/
 static void server_init(void) {
 	int err;
 	char u[60];
@@ -137,9 +140,19 @@ static void server_init(void) {
 	ESP_ERROR_CHECK(esp_timer_start_periodic(t, 60*SECONDS));
 }
 
+/*
+	Advertising process 
+	https://mynewt.apache.org/latest/tutorials/ble/bleprph/bleprph-sections/bleprph-adv.html
+
+	It is a message transmitted by the gnarl to all the near BLE devices,
+	it contains the info needed to connect with it if someone wants it.
+
+	When some device start a communication with the GNARL, the function "handle gap event" is executed
+*/
 static void advertise(void) {
+	// Defines "fields" and "fields_ext" which are info to be transmitted, thus looking for a match
 	struct ble_hs_adv_fields fields, fields_ext;
-	char short_name[6]; // 5 plus zero byte
+
 	memset(&fields, 0, sizeof(fields));
 	memset(&fields_ext, 0, sizeof(fields_ext));
 
@@ -148,6 +161,8 @@ static void advertise(void) {
 	fields.tx_pwr_lvl_is_present = 1;
 	fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
 
+	//set the GAP device name to gnarl
+	char short_name[6]; // 5 plus zero byte
 	const char *name = ble_svc_gap_device_name();
 	strncpy(short_name, name, sizeof(short_name));
 	fields.name = (uint8_t *)short_name;
@@ -161,18 +176,21 @@ static void advertise(void) {
 
 	ESP_LOGD(TAG, "gap_device_name %d %s", fields.name_len, fields.name);
 
+	//Continues filling info to be transmitted
 	fields.uuids128 = &service_uuid;
 	fields.num_uuids128 = 1;
 	fields.uuids128_is_complete = 1;
 
+	//Specification of what information is to be include in its advertisements
 	int err = ble_gap_adv_set_fields(&fields);
 	if (err) {
 		ESP_LOGE(TAG, "ble_gap_adv_set_fields err %d", err);
 	}
 	assert(!err);
 
+	//Retries to fill the name
 	if (!fields.name_is_complete) {
-		// Not sure if we have to set the flags again.
+		// Not sure if we have to set the flags again.		Eric's comment
 		// We should determine and check the maximum
 		// length here as well to prevent crashing.
 		fields_ext.flags = fields.flags;
@@ -183,7 +201,7 @@ static void advertise(void) {
 		if (err) {
 			ESP_LOGE(TAG, "ble_gap_adv_set_fields fields_ext, name might be too long, err %d", err);
 		}
-		// Do not crash, but keep going. It is hard to recover otherwise.
+		// Do not crash, but keep going. It is hard to recover otherwise.	Eric's comment
 	}
 
 	// Begin advertising.
@@ -192,12 +210,27 @@ static void advertise(void) {
 	adv.conn_mode = BLE_GAP_CONN_MODE_UND;
 	adv.disc_mode = BLE_GAP_DISC_MODE_GEN;
 
+	// "ble_gap_adv_start" is the function which start the advertising
+	// and it only finish it when a central connects to it
+	// When a connection is setted, the function "handle gap event" is executed
 	err = ble_gap_adv_start(addr_type, 0, BLE_HS_FOREVER, &adv, handle_gap_event, 0);
 	assert(!err);
 
 	ESP_LOGD(TAG, "advertising started");
 }
 
+/*
+	Depending of the GAP event execute one or other code.
+	The GAP event is like a task to be done, for example:
+		If you want to connect you execute the BLE_GAP_EVENT_CONNECT GAP event
+	
+	Another GAP events in this code are:
+		* BLE_GAP_EVENT_CONNECT
+		* BLE_GAP_EVENT_DISCONNECT
+		* BLE_GAP_EVENT_ADV_COMPLETE
+		* BLE_GAP_EVENT_SUBSCRIBE
+		* Anothers
+*/
 static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 	switch (e->type) {
 	case BLE_GAP_EVENT_CONNECT:
@@ -244,6 +277,10 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 	return 0;
 }
 
+/*
+	Debug and copy an id (device address)
+	call the advertise function
+*/
 static void sync_callback(void) {
 	int err;
 
@@ -256,7 +293,7 @@ static void sync_callback(void) {
 	uint8_t addr[6];
 	ble_hs_id_copy_addr(addr_type, addr, 0);
 	if (LOG_LOCAL_LEVEL >= ESP_LOG_DEBUG) {
-		printf("device address: ");
+		printf("device address: ");								//Print in monitor the id
 		for (int i = sizeof(addr)-1; i >= 0; i--) {
 			printf("%02x%s", addr[i], i == 0 ? "" : ":");
 		}
@@ -462,22 +499,53 @@ static void host_task(void *arg) {
 	nimble_port_run();
 }
 
+/*
+	Call start_gnarl_task();
+	Initializate the NimBLE configuration (NimBLE is a BLE Stack) and debug
+
+	Set the function "sync_callback" like the function to be executed when a sync occurs
+*/
 void gnarl_init(void) {
 	start_gnarl_task();												//Start the gnarl_loop creating a high priority task
 
-	ESP_ERROR_CHECK(nvs_flash_init());
-	ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
-	nimble_port_init();
+	//NimBLE config
+	ESP_ERROR_CHECK(nvs_flash_init());								//Initializate the default NVS partition and check it
+	ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());			//Initializate ESP controller as well as transport layer and check it
+																	//This will also link the host and controller modules together
+	nimble_port_init();												//Initialize the host stack
+	
+	//Initialization of the required NimBLE host configuration parameters and callbacks
+	//Perform application specific tasks/initialization
 
-	ble_hs_cfg.sync_cb = sync_callback;
+	ble_hs_cfg.sync_cb = sync_callback;								//The variable ble_hs_cfg.sync_cb points to the function that 
+																	//should be called when sync occurs. In this case sync_callback function
 
-	server_init();
+	server_init();													//Init the server and display the UUID of the pŕocess
 
-	read_custom_name();
+	read_custom_name();												//Read the custom name from nvs and debug
 
-	int err = ble_svc_gap_device_name_set((char *)custom_name);
-	assert(!err);
+	int err = ble_svc_gap_device_name_set((char *)custom_name);		//Set the custom name to the device, this is "GNARL"
+	assert(!err);													//Debug the setting of the name
 
 	ble_store_ram_init();
-	nimble_port_freertos_init(host_task);
+
+
+	nimble_port_freertos_init(host_task);							//Run the thread for host stack
+	//End of NimBLE config
 }
+
+/*
+The NimBLE is a BLE stack, this is an app which constrols all the Bluetooth services.
+	-> The initialization of the NimBLE needs the NVS (non volatile storage) it is designed to store values in flash memory
+
+NimBLE info: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/nimble/index.html
+
+The UUID is an Universally unique identifier, this is an unique number which identifies profiles, services,
+and data types in a generic attribute (GATT) profile.
+In this case, this is a 32 bits UUID.		
+*/
+
+/*
+	Advertising process 
+	https://mynewt.apache.org/latest/tutorials/ble/bleprph/bleprph-sections/bleprph-adv.html
+*/

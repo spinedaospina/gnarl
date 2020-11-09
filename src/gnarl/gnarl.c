@@ -357,12 +357,12 @@ gnarl_loop(void *unused)
 	
 */
 static void gnarl_loop(void *unused) {
-	ESP_LOGD(TAG, "starting gnarl_loop");
-	esp_task_wdt_add(0);
+	ESP_LOGD(TAG, "starting gnarl_loop");						//Print "starting gnarl_loop" in monitor
+	esp_task_wdt_add(0);										//The WDT starts looking this task
 	const int timeout_ms = 60*MILLISECONDS;
 	for (;;) {
 		rfspy_request_t req;
-		if (!xQueueReceive(request_queue, &req, pdMS_TO_TICKS(timeout_ms))) {
+		if (!xQueueReceive(request_queue, &req, pdMS_TO_TICKS(timeout_ms))) {	//If 
 			continue;
 		}
 		esp_task_wdt_reset();

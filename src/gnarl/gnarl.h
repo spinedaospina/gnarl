@@ -23,11 +23,19 @@
 #define STATE_OK "OK"
 
 void gnarl_init(void);
+/*
+	Call start_gnarl_task();
+	Initializate the NimBLE configuration (NimBLE is a BLE Stack) and debug
+
+	Set the function "sync_callback" like the function to be executed when a sync occurs
+*/
+
 void start_gnarl_task(void);
 /*
 start_gnarl_task()
 	Start the gnarl_loop creating a high priority task
 */
+
 void rfspy_command(const uint8_t *buf, int count, int rssi);
 void send_code(const uint8_t code);
 void send_bytes(const uint8_t *buf, int count);
