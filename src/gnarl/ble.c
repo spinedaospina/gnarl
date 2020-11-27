@@ -70,6 +70,21 @@ static int timer_tick_notify_state;
 static uint8_t timer_tick;
 static void timer_tick_callback(void *);
 
+/*
+	Based on: https://mynewt.apache.org/latest/tutorials/ble/bleprph/bleprph-sections/bleprph-svc-reg.html#attribute-set
+
+	List of services, these are:
+
+			characteristic            |       function to execute
+		* data_uuid.u					 -> data_access
+		* response_count_uuid.u          -> no_access
+		* timer_tick_uuid.u              -> no_access
+		* custom_name_uuid.u			 -> custom_name_access
+		* firmware_version_uuid.u		 -> firmware_version_access
+		* led_mode_uuid.u 				 -> led_mode_access
+	
+	the flags lited below indicates which operations are permitted for this characteri stic.
+*/
 static const struct ble_gatt_svc_def service_list[] = {
 	{
 		.type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -220,14 +235,13 @@ static void advertise(void) {
 }
 
 /*
-	Depending of the GAP event execute one or other code.
-	The GAP event is like a task to be done, for example:
-		If you want to connect you execute the BLE_GAP_EVENT_CONNECT GAP event
-	
-	Another GAP events in this code are:
+	Based on:
+	https://mynewt.apache.org/latest/tutorials/ble/bleprph/bleprph-sections/bleprph-gap-event.html
+
+	A GAP event informs when the BLE connection changes, the GAP events in this code are:
 		* BLE_GAP_EVENT_CONNECT
 		* BLE_GAP_EVENT_DISCONNECT
-		* BLE_GAP_EVENT_ADV_COMPLETE
+		* BLE_GAP_EVENT_ADV_COMPLETE	->    Advertising complete
 		* BLE_GAP_EVENT_SUBSCRIBE
 		* Anothers
 */
@@ -278,8 +292,8 @@ static int handle_gap_event(struct ble_gap_event *e, void *arg) {
 }
 
 /*
-	Debug and copy an id (device address)
-	call the advertise function
+	Debug and shows the GNARL ID through the monitor.
+	Call the advertise function
 */
 static void sync_callback(void) {
 	int err;
@@ -503,7 +517,8 @@ static void host_task(void *arg) {
 	Call start_gnarl_task();
 	Initializate the NimBLE configuration (NimBLE is a BLE Stack) and debug
 
-	Set the function "sync_callback" like the function to be executed when a sync occurs
+	Set the function "sync_callback" like the function to be executed 
+	when a sync between the host and the controller layer occurs
 */
 void gnarl_init(void) {
 	start_gnarl_task();												//Start the gnarl_loop creating a high priority task
@@ -517,8 +532,11 @@ void gnarl_init(void) {
 	//Initialization of the required NimBLE host configuration parameters and callbacks
 	//Perform application specific tasks/initialization
 
-	ble_hs_cfg.sync_cb = sync_callback;								//The variable ble_hs_cfg.sync_cb points to the function that 
-																	//should be called when sync occurs. In this case sync_callback function
+	ble_hs_cfg.sync_cb = sync_callback;								// The variable ble_hs_cfg.sync_cb points to the function that 
+																	// should be called when sync between the host layer and the
+																	// controller layer occurs (These are, in this case, 
+																	// physically in the same device).
+																	// The function to be executed is "sync_callback"
 
 	server_init();													//Init the server and display the UUID of the pŕocess
 
@@ -533,6 +551,8 @@ void gnarl_init(void) {
 	nimble_port_freertos_init(host_task);							//Run the thread for host stack
 	//End of NimBLE config
 }
+
+
 
 /*
 The NimBLE is a BLE stack, this is an app which constrols all the Bluetooth services.
